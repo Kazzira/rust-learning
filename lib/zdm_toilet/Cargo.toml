@@ -1,0 +1,11 @@
+[package]
+name = "zdm_toilet"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+test = true
+
+
+[dependencies]
+regex = "*"
