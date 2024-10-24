@@ -70,4 +70,44 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn word_that_wont_apply_results_in_error() {
+        let input: String = "Lahabrea".to_owned();
+
+        let toilet_result = zdm_toilet::toiletify_word(&input);
+
+        match toilet_result {
+            Ok(_new_word) => panic!("String result should not apply!"),
+            Err(error_code) => {
+                assert_eq!(error_code, zdm_toilet::ToiletErrorCode::NonToiletWord)
+            }
+        }
+    }
+
+    #[test]
+    fn test_twilight_becomes_toilet() {
+        let input: String = "twilight".to_owned();
+
+        // Can I match the function call?
+        match zdm_toilet::toiletify_word(&input) {
+            Ok(new_word) => assert_eq!(new_word, "toilet"),
+            Err(_err) => {
+                panic!("Should not result in error!")
+            }
+        }
+    }
+
+    #[test]
+    fn test_totalitarian_becomes_totoiletarian() {
+        let input: String = "totalitarian".to_owned();
+
+        // Can I match the function call?
+        match zdm_toilet::toiletify_word(&input) {
+            Ok(new_word) => assert_eq!(new_word, "totoiletarian"),
+            Err(_err) => {
+                panic!("Should not result in error!")
+            }
+        }
+    }
 }
