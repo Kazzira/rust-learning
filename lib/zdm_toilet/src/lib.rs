@@ -67,6 +67,7 @@ pub mod zdm_toilet {
         match new_word_or_none {
             Some(r_new_word) => new_word = r_new_word,
             None => {
+                // Should I rename InternalError to InternalRegexError?
                 return Err(ToiletErrorCode::InternalError);
             }
         }
