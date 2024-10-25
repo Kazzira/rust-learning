@@ -1,10 +1,14 @@
 pub mod zdm_toilet {
     use regex::Regex;
 
+    /// This is the error code returned by Err in do_toiletify_word.
     #[derive(Debug, PartialEq)]
     pub enum ToiletErrorCode {
+        /// This error code is returned when the word has a space.
         WordHasSpace,
+        /// This error code is returned when the word is not transformed.
         NonToiletWord,
+        /// This error code is returned when the regex returns an error.
         InternalError,
     }
 
@@ -29,6 +33,28 @@ pub mod zdm_toilet {
         Some(new_word)
     }
 
+    /// Transforms a substring of a word into toilet based on certain conditons.
+    ///
+    /// This string or substring must begin with 't', have some letters (not t!)
+    /// then 'l', then some letters(not t!), then 't'.
+    ///
+    /// Replace that substring with toilet.
+    ///
+    /// # Examples:
+    /// - twilight => toilet
+    /// - totalitarian => totoiletarian
+    /// - teletypewriter => toiletypewriter
+    ///
+    /// # Arguments
+    ///
+    /// * 'word' - The word with no spaces.
+    ///
+    /// # Returns
+    /// - String transformed if word meets the conditions above.
+    /// - ToiletErrorCode::WordHasSpace if the word contains a space.
+    /// - ToiletErrorCode::NonToiletWord if the word does not meet the conditions.
+    /// - ToiletErrorCode::InternalError if the regex fails for some reason.
+    ///
     pub fn toiletify_word(word: &String) -> Result<String, ToiletErrorCode> {
         // No words with spaces!
         if word.find(' ').is_some() {
