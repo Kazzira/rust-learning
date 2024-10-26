@@ -3,16 +3,16 @@ pub mod zdm_toilet {
 
     /// This is the error code returned by Err in do_toiletify_word.
     #[derive(Debug, PartialEq)]
-    pub enum ToiletErrorCode {
+    pub enum Error {
         /// This error code is returned when the word has a space.
         WordHasSpace,
         /// This error code is returned when the word is not transformed.
         NonToiletWord,
         /// This error code is returned when the regex returns an error.
-        InternalError,
+        InternalRegexError(regex::Error),
     }
 
-    fn do_toiletify_word(word: &String) -> Option<String> {
+    fn do_toiletify_word(word: &str) -> Result<String, regex::Error> {
         let re_result = Regex::new(r"[Tt][^Tt]+[Ll][^Tt]+[Tt]");
         let re: Regex;
 
@@ -20,17 +20,13 @@ pub mod zdm_toilet {
             Ok(r_re) => {
                 re = r_re;
             }
-            Err(_r_error) => {
-                // I guess return none. Don't leak a regex error I guess...
-                // Could have InternalError become RegexError and attach
-                // the regex::Error type...
-                return None;
+            Err(r_error) => {
+                return Err(r_error);
             }
         }
 
-        let new_word = re.replace(word.as_str(), "toilet").into_owned();
-
-        Some(new_word)
+        let new_word = re.replace(word, "toilet").into_owned();
+        Ok(new_word)
     }
 
     /// Transforms a substring of a word into toilet based on certain conditons.
@@ -40,7 +36,7 @@ pub mod zdm_toilet {
     ///
     /// Replace that substring with toilet.
     ///
-    /// # Examples:
+    /// # Examples
     /// - twilight => toilet
     /// - totalitarian => totoiletarian
     /// - teletypewriter => toiletypewriter
@@ -51,49 +47,43 @@ pub mod zdm_toilet {
     ///
     /// # Returns
     /// - String transformed if word meets the conditions above.
-    /// - ToiletErrorCode::WordHasSpace if the word contains a space.
-    /// - ToiletErrorCode::NonToiletWord if the word does not meet the conditions.
-    /// - ToiletErrorCode::InternalError if the regex fails for some reason.
+    /// - Error::WordHasSpace if the word contains a space.
+    /// - Error::NonToiletWord if the word does not meet the conditions.
+    /// - Error::InternalRegexError if the regex fails for some reason.
     ///
-    pub fn toiletify_word(word: &String) -> Result<String, ToiletErrorCode> {
+    pub fn toiletify_word(word: &str) -> Result<String, Error> {
         // No words with spaces!
         if word.find(' ').is_some() {
-            return Err(ToiletErrorCode::WordHasSpace);
+            return Err(Error::WordHasSpace);
         }
 
         let new_word_or_none = do_toiletify_word(&word);
         let new_word: String;
 
         match new_word_or_none {
-            Some(r_new_word) => new_word = r_new_word,
-            None => {
-                // Should I rename InternalError to InternalRegexError?
-                return Err(ToiletErrorCode::InternalError);
+            Ok(r_new_word) => new_word = r_new_word,
+            Err(r_error) => {
+                return Err(Error::InternalRegexError(r_error));
             }
         }
 
         if new_word == *word {
-            Err(ToiletErrorCode::NonToiletWord)
+            Err(Error::NonToiletWord)
         } else {
             Ok(new_word)
         }
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use crate::zdm_toilet;
 
     #[test]
     fn word_with_spaces_should_result_in_error() {
         let input: String = "Fun Times".to_owned();
 
-        let toilet_result = zdm_toilet::toiletify_word(&input);
+        let toilet_result = toiletify_word(&input);
 
         match toilet_result {
             Ok(_new_word) => panic!("String has space and should returned and error"),
             Err(error_code) => {
-                assert_eq!(error_code, zdm_toilet::ToiletErrorCode::WordHasSpace)
+                assert_eq!(error_code, Error::WordHasSpace)
             }
         }
     }
@@ -102,12 +92,12 @@ mod tests {
     fn word_that_wont_apply_results_in_error() {
         let input: String = "Lahabrea".to_owned();
 
-        let toilet_result = zdm_toilet::toiletify_word(&input);
+        let toilet_result = toiletify_word(&input);
 
         match toilet_result {
             Ok(_new_word) => panic!("String result should not apply!"),
             Err(error_code) => {
-                assert_eq!(error_code, zdm_toilet::ToiletErrorCode::NonToiletWord)
+                assert_eq!(error_code, Error::NonToiletWord)
             }
         }
     }
@@ -117,7 +107,7 @@ mod tests {
         let input: String = "twilight".to_owned();
 
         // Can I match the function call?
-        match zdm_toilet::toiletify_word(&input) {
+        match toiletify_word(&input) {
             Ok(new_word) => assert_eq!(new_word, "toilet"),
             Err(_err) => {
                 panic!("Should not result in error!")
@@ -130,7 +120,7 @@ mod tests {
         let input: String = "totalitarian".to_owned();
 
         // Can I match the function call?
-        match zdm_toilet::toiletify_word(&input) {
+        match toiletify_word(&input) {
             Ok(new_word) => assert_eq!(new_word, "totoiletarian"),
             Err(_err) => {
                 panic!("Should not result in error!")
