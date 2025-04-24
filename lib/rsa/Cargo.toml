@@ -1,0 +1,11 @@
+[package]
+name = "rsa"
+version = "0.0.0"
+edition = "2021"
+
+[lib]
+test = true
+
+
+[dependencies]
+num-bigint = "*"
