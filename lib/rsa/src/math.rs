@@ -1,4 +1,4 @@
-use num_bigint::{BigInt, ToBigInt};
+use num_bigint::{BigInt, RandBigInt, ToBigInt};
 use std::mem;
 
 /// Factor out the largest power of 2 from a BigInt.
@@ -17,7 +17,7 @@ use std::mem;
 ///  use rsa::math::factor_power_2;
 ///
 ///  let n = 8.to_bigint().unwrap();
-///  assert_eq!(factor_power_2(&n), (1.to_bigint().unwrap(), 3.to_bigint().unwrap()));
+///  assert_eq!(factor_power_2(&n), (1.to_bigint().unwrap(), 3));
 ///  ```
 ///
 ///  ```
@@ -25,11 +25,11 @@ use std::mem;
 ///  use rsa::math::factor_power_2;
 ///
 ///  let n = 10.to_bigint().unwrap();
-///  assert_eq!(factor_power_2(&n), (5.to_bigint().unwrap(), 1.to_bigint().unwrap()));
+///  assert_eq!(factor_power_2(&n), (5.to_bigint().unwrap(), 1));
 ///  ```
-pub fn factor_power_2(n: &BigInt) -> (BigInt, BigInt) {
+pub fn factor_power_2(n: &BigInt) -> (BigInt, u32) {
     let mut n = n.clone();
-    let mut k = 0.to_bigint().unwrap();
+    let mut k = 0;
     let zero = 0.to_bigint().unwrap();
 
     while &n % 2 == zero {
@@ -109,41 +109,31 @@ pub fn gcd(a: &BigInt, b: &BigInt) -> BigInt {
 /// # Examples
 /// ```
 /// use num_bigint::{BigInt, ToBigInt};
-/// use rsa::math::reverse_euclidean_algorithm;
+/// use rsa::math::multiplicative_inverse;
 ///
 /// let a = 3.to_bigint().unwrap();
 /// let b = 11.to_bigint().unwrap();
-/// assert_eq!(reverse_euclidean_algorithm(&a, &b), 4.to_bigint().unwrap());
+/// assert_eq!(multiplicative_inverse(&a, &b), 4.to_bigint().unwrap());
 /// ```
 ///
 /// ```
 /// use num_bigint::{BigInt, ToBigInt};
-/// use rsa::math::reverse_euclidean_algorithm;
+/// use rsa::math::multiplicative_inverse;
 ///
 /// let a = 10.to_bigint().unwrap();
 /// let b = 17.to_bigint().unwrap();
-/// assert_eq!(reverse_euclidean_algorithm(&a, &b), 12.to_bigint().unwrap());
+/// assert_eq!(multiplicative_inverse(&a, &b), 12.to_bigint().unwrap());
 /// ```
 ///
 /// ```
 /// use num_bigint::{BigInt, ToBigInt};
-/// use rsa::math::reverse_euclidean_algorithm;
+/// use rsa::math::multiplicative_inverse;
 ///
 /// let a = 5.to_bigint().unwrap();
 /// let b = 8.to_bigint().unwrap();
-/// assert_eq!(reverse_euclidean_algorithm(&a, &b), 5.to_bigint().unwrap());
+/// assert_eq!(multiplicative_inverse(&a, &b), 5.to_bigint().unwrap());
 /// ```
-///
-/// ```
-/// use num_bigint::{BigInt, ToBigInt};
-/// use rsa::math::reverse_euclidean_algorithm;
-///
-/// let a = 8.to_bigint().unwrap();
-/// let b = 4.to_bigint().unwrap();
-///
-/// assert_eq!(reverse_euclidean_algorithm(&a, &b), 0.to_bigint().unwrap());
-/// ```
-pub fn reverse_euclidean_algorithm(a: &BigInt, b: &BigInt) -> BigInt {
+pub fn multiplicative_inverse(a: &BigInt, b: &BigInt) -> BigInt {
     let mut r0 = a.clone();
     let mut r1 = b.clone();
 
@@ -151,45 +141,34 @@ pub fn reverse_euclidean_algorithm(a: &BigInt, b: &BigInt) -> BigInt {
         mem::swap(&mut r0, &mut r1);
     }
 
-    let mut s0 = 1.to_bigint().unwrap();
-    let mut s1 = 0.to_bigint().unwrap();
     let mut t0 = 0.to_bigint().unwrap();
     let mut t1 = 1.to_bigint().unwrap();
 
     let zero = 0.to_bigint().unwrap();
-    let one = 1.to_bigint().unwrap();
 
     while r1 != zero {
         let q = &r0 / &r1;
         let r2 = &r0 - &q * &r1;
+        let t2 = &t0 - &q * &t1;
 
         r0 = r1;
         r1 = r2;
-
-        let s2 = &s0 - &q * &s1;
-        s0 = s1;
-        s1 = s2;
-
-        let t2 = &t0 - &q * &t1;
         t0 = t1;
         t1 = t2;
     }
 
-    if r0 == one {
-        if t0 < zero {
-            return b + t0;
-        }
-        return t0;
+    if t0 < zero {
+        t0 += b;
     }
 
-    zero
+    t0
 }
 
 /// Perform the Miller-Rabin primality test.
 ///
 /// # Arguments
 /// * `n` - A reference to the BigInt number to be tested for primality.
-/// * `a` - A reference to the base for the test.
+/// * `b` - The miller base for the Miller-Rabin test.
 ///
 /// # Returns
 /// * A boolean indicating whether the number is likely prime.
@@ -200,42 +179,149 @@ pub fn reverse_euclidean_algorithm(a: &BigInt, b: &BigInt) -> BigInt {
 /// use rsa::math::miller_test;
 ///
 /// let n = 7.to_bigint().unwrap();
-/// let a = 2.to_bigint().unwrap();
-/// assert!(miller_test(&n, &a));
+/// assert!(miller_test(&n, 2));
 /// ```
 ///
 /// ```
 /// use num_bigint::{BigInt, ToBigInt};
 /// use rsa::math::miller_test;
 ///
-/// let n = 9.to_bigint().unwrap();
-/// let a = 2.to_bigint().unwrap();
-/// assert!(!miller_test(&n, &a));
+/// let n = 10.to_bigint().unwrap();
+/// assert!(!miller_test(&n, 2));
 /// ```
-pub fn miller_test(n: &BigInt, a: &BigInt) -> bool {
-    let one = 1.to_bigint().unwrap();
-    let zero = 0.to_bigint().unwrap();
-    let (d, s) = factor_power_2(&(n - &one));
+pub fn miller_test(n: &BigInt, b: u64) -> bool {
+    let one = BigInt::from(1);
+    let n_minus_one = n - &one;
+    let (t, s) = factor_power_2(&n_minus_one);
 
-    let s_minus_one = s - one;
+    let base = BigInt::from(b);
 
-    let mut x = a.modpow(&d, &n);
+    let mut x = base.modpow(&t, &n);
 
-    if x == 1.to_bigint().unwrap() || x == n - 1 {
+    if x == one || x == n_minus_one {
         return true;
     }
 
-    let mut counter = zero.clone();
+    let two = BigInt::from(2);
 
-    while counter < s_minus_one {
-        x = x.modpow(&2.to_bigint().unwrap(), &n);
-        if x == n - 1 {
+    for counter in 0..s {
+        let exp = two.pow(counter) * &t;
+        x = base.modpow(&exp, &n);
+        if x == n_minus_one {
             return true;
         }
-        counter += 1;
     }
 
     false
+}
+
+/// Check if a number is prime using the Miller-Rabin primality test.
+/// The return value may be a false positive if the max_miller_bases is too low.
+///
+/// # Arguments
+/// * `p` - A reference to the BigInt number to be tested for primality.
+/// * `max_miller_bases` - The maximum number of Miller bases to use for the test.
+///
+/// # Returns
+/// * A boolean indicating whether the number is likely prime.
+///
+/// # Examples
+/// ```
+/// use num_bigint::{BigInt, ToBigInt};
+/// use rsa::math::is_prime;
+///
+/// let p = 7.to_bigint().unwrap();
+/// assert!(is_prime(&p, 5));
+/// ```
+///
+/// ```
+/// use num_bigint::{BigInt, ToBigInt};
+/// use rsa::math::is_prime;
+///
+/// let p = 10.to_bigint().unwrap();
+/// assert!(!is_prime(&p, 5));
+/// ```
+///
+/// ```
+/// use num_bigint::{BigInt, ToBigInt};
+/// use rsa::math::is_prime;
+///
+/// let p = 2.to_bigint().unwrap();
+/// assert!(is_prime(&p, 5));
+/// ```
+///
+/// ```
+/// use num_bigint::{BigInt, ToBigInt};
+/// use rsa::math::is_prime;
+///
+/// let p = 1.to_bigint().unwrap();
+/// assert!(!is_prime(&p, 5));
+/// ```
+pub fn is_prime(p: &BigInt, max_miller_bases: u64) -> bool {
+    let zero = BigInt::from(0);
+    let two = BigInt::from(2);
+
+    if *p < two {
+        return false;
+    }
+
+    if *p == two {
+        return true;
+    }
+
+    if p % &two == zero {
+        return false;
+    }
+
+    let mut b = 2;
+
+    while b < max_miller_bases {
+        if !miller_test(p, b) {
+            return false;
+        }
+
+        b += 1;
+    }
+
+    true
+}
+
+/// Generate a random prime number with the specified number of bits.
+///
+/// # Arguments
+/// * `bits` - The number of bits for the prime number.
+///
+/// # Returns
+/// * A BigInt representing the generated prime number.
+///
+/// # Examples
+/// ```
+/// use rsa::math::generate_random_prime;
+/// use rsa::math::is_prime;
+///
+/// let prime = generate_random_prime(128);
+/// assert!(is_prime(&prime, 5));
+/// ```
+pub fn generate_random_prime(bits: u64) -> BigInt {
+    let mut rng = rand::thread_rng();
+    let mut prime = BigInt::from(0);
+    let bases = bits;
+    let zero = BigInt::from(0);
+    let two = BigInt::from(2);
+
+    while !is_prime(&prime, bases) {
+        prime = rng.gen_bigint(bits);
+
+        if prime < zero {
+            prime = -prime;
+        }
+
+        if &prime % &two == zero {
+            prime += 1;
+        }
+    }
+
+    prime
 }
 
 #[test]
@@ -260,4 +346,47 @@ fn gcd_of_8_and_4_is_4() {
     let b = 4.to_bigint().unwrap();
 
     assert_eq!(gcd(&a, &b), 4.to_bigint().unwrap());
+}
+
+#[test]
+fn factor_power_2_of_8_is_3() {
+    let n = 8.to_bigint().unwrap();
+    assert_eq!(factor_power_2(&n), (1.to_bigint().unwrap(), 3));
+}
+
+#[test]
+fn factor_power_2_of_10_is_1() {
+    let n = 10.to_bigint().unwrap();
+    assert_eq!(factor_power_2(&n), (5.to_bigint().unwrap(), 1));
+}
+
+#[test]
+fn multiplicative_inverse_of_3_and_11_is_4() {
+    let a = 3.to_bigint().unwrap();
+    let b = 11.to_bigint().unwrap();
+
+    assert_eq!(multiplicative_inverse(&a, &b), 4.to_bigint().unwrap());
+}
+
+#[test]
+fn generate_random_prime_is_not_negative() {
+    let bits = 128;
+    let prime = generate_random_prime(bits);
+    assert!(prime > 0.to_bigint().unwrap());
+}
+
+#[test]
+fn multiplicative_inverse_of_10_and_17_is_12() {
+    let a = 10.to_bigint().unwrap();
+    let b = 17.to_bigint().unwrap();
+
+    assert_eq!(multiplicative_inverse(&a, &b), 12.to_bigint().unwrap());
+}
+
+#[test]
+fn multiplicative_inverse_of_5_and_8_is_5() {
+    let a = 5.to_bigint().unwrap();
+    let b = 8.to_bigint().unwrap();
+
+    assert_eq!(multiplicative_inverse(&a, &b), 5.to_bigint().unwrap());
 }

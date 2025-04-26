@@ -8,4 +8,5 @@ test = true
 
 
 [dependencies]
-num-bigint = "*"
+num-bigint = {version = "*", features = ["rand"]}
+rand = "*"
