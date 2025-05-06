@@ -1,14 +1,18 @@
 pub mod zdm_toilet {
     use regex::Regex;
+    use thiserror::Error;
 
     /// This is the error code returned by Err in do_toiletify_word.
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Error)]
     pub enum Error {
         /// This error code is returned when the word has a space.
+        #[error("The word contains a space.")]
         WordHasSpace,
         /// This error code is returned when the word is not transformed.
+        #[error("The word does not meet the conditions for transformation.")]
         NonToiletWord,
         /// This error code is returned when the regex returns an error.
+        #[error("Internal regex error: {0}")]
         InternalRegexError(regex::Error),
     }
 
