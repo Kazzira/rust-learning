@@ -104,7 +104,7 @@ pub fn gcd(a: &BigInt, b: &BigInt) -> BigInt {
 /// * `b` - A reference to the BigInt number modulo which the inverse is calculated.
 ///
 /// # Returns
-/// * A BigInt representing the modular inverse of `a` modulo `b`, or 0 if the inverse does not exist.
+/// * A BigInt representing the modular inverse of `a` modulo `b`.
 ///
 /// # Examples
 /// ```
@@ -158,7 +158,7 @@ pub fn multiplicative_inverse(a: &BigInt, b: &BigInt) -> BigInt {
     }
 
     if t0 < zero {
-        t0 += b;
+        t0 += b; // Defeats the purpose of r0, r1.
     }
 
     t0

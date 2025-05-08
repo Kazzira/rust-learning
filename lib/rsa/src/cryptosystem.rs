@@ -46,8 +46,9 @@ impl RSAKey {
     }
 
     pub fn generate_random_key(bits: u64) -> Self {
-        let p = math::generate_random_prime(bits / 2);
-        let q = math::generate_random_prime(bits / 2);
+        let bits = bits / 2;
+        let p = math::generate_random_prime(bits);
+        let q = math::generate_random_prime(bits);
         RSAKey::generate_keypair(&p, &q)
     }
 }
@@ -119,6 +120,18 @@ fn rsa_test_key_with_p_7_and_q_5() {
 #[test]
 fn test_rsa_key_with_128_bits() {
     let bits = 128;
+    let key = RSAKey::generate_random_key(bits);
+
+    let message = BigInt::from(153252);
+    let ciphertext = key.encrypt(&message);
+    let decrypted_message = key.decrypt(&ciphertext);
+
+    assert_eq!(message, decrypted_message);
+}
+
+#[test]
+fn test_rsa_key_with_256_bits() {
+    let bits = 256;
     let key = RSAKey::generate_random_key(bits);
 
     let message = BigInt::from(153252);
